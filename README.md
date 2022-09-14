@@ -7,5 +7,7 @@ Mobile => React Native
 
 
 Configurações úteis
-•Backend:
+•Backend NodeJS:
+ -Versão do Node -> 16.17.0
+•Frontend ReactJS:
  -Versão do Node -> 16.17.0
