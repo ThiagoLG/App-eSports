@@ -1,5 +1,6 @@
-import Express, { request, response } from "express";
+import Express from "express";
 import { PrismaClient } from "@prisma/client";
+import DateUtils from "./utils/date-functions";
 
 /*- Criação do app com base no express -*/
 const app = Express();
@@ -9,8 +10,18 @@ const prisma = new PrismaClient({
 app.use(Express.json());
 
 /*- Get ads -*/
-app.get("/ads", (request, response) => {
-  return response.status(201).json([]);
+app.get("/ads", async (request, response) => {
+  const ads = await prisma.ad.findMany();
+  return response.status(201).json(
+    ads.map((ad) => {
+      return {
+        ...ad,
+        weekDays: ad.weekDays.split(","),
+        hourStart: DateUtils.convertMinutesToHourString(ad.hourStart),
+        hourEnd: DateUtils.convertMinutesToHourString(ad.hourEnd),
+      };
+    })
+  );
 });
 
 /*- Get games -*/
@@ -50,7 +61,14 @@ app.get("/games/:id/ads", async (request, response) => {
   });
 
   return response.json(
-    ads.map((ad) => ({ ...ad, weekDays: ad.weekDays.split(",") }))
+    ads.map((ad) => {
+      return {
+        ...ad,
+        weekDays: ad.weekDays.split(","),
+        hourStart: DateUtils.convertMinutesToHourString(ad.hourStart),
+        hourEnd: DateUtils.convertMinutesToHourString(ad.hourEnd)
+      };
+    })
   );
 });
 
@@ -72,10 +90,23 @@ app.get("/ads/:id/discord", async (request, response) => {
 /*- Creat new Ad -*/
 app.post("/games/:id/ads", async (request, response) => {
   const gameId = request.params.id;
+  const body = request.body;
 
   //TODO -> Finalizar a implementação da inclusão de novos ads no banco
+  const ad = await prisma.ad.create({
+    data: {
+      gameId: gameId,
+      name: body.name,
+      yearsPlaying: body.yearsPlaying,
+      discord: body.discord,
+      weekDays: body.weekDays,
+      hourStart: DateUtils.convertHourStringToMinutes(body.hourStart),
+      hourEnd: DateUtils.convertHourStringToMinutes(body.hourEnd),
+      useVoiceChannel: body.useVoiceChannel,
+    },
+  });
 
-  return response.json(request.body);
+  return response.json(ad);
 });
 
 /*- Ativa o listener para a porta 3333 -*/
